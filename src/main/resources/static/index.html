@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>saw</title>
+  <link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <script src="/webjars/jquery/jquery.min.js"></script>
+  <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+  <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+  <link rel="shortcut icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/10253/10253352.png" />
+  <script type="text/javascript">
+    let stompClient = null;
+    const headers={
+      'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhYmRpZXYiLCJleHAiOjE2ODA1MTQ1NTcsImlhdCI6MTY4MDUxMzk1N30.a1wRLYpd2ptVgdwunG1eol3JjMTl0ulE2amyv5Jjac'
+    }
+    $(document).ready(function() {
+      connect();
+
+      $("#send").click(function() {
+        sendMessage();
+      });
+    });
+
+    function connect() {
+      let socket = new SockJS('/chat');
+      stompClient = Stomp.over(socket);
+      stompClient.connect(headers, function () {
+        stompClient.subscribe('/pool/messages', function (message) {
+          showMessage(JSON.parse(message.body).message,JSON.parse(message.body).sender,JSON.parse(message.body).time);
+        });
+
+      });
+    }
+
+    function showMessage(message,sender,time) {
+      $("#messages").append("<tr><td>" + time + "    " + sender + "  :  " + message + "</td></tr>");
+    }
+
+    function sendMessage() {
+      stompClient.send("/send/message", headers, JSON.stringify({'message': $("#message").val(),'sender': $("#sender").val()}));
+    }
+
+
+  </script>
+</head>
+  <body>
+    <div class="container" style="margin-top: 50px">
+      <div class="row">
+        <div class="col-md-12">
+          <form class="form-inline">
+            <div class="form-group">
+              <label for="message">Message</label>
+              <input
+                type="text"
+                id="message"
+                class="form-control"
+                placeholder="...."
+              />
+            </div>
+            <div class="form-group">
+              <label for="message">Sender</label>
+              <input
+                      type="text"
+                      id="sender"
+                      class="form-control"
+                      placeholder="...."
+              />
+            </div>
+            <button
+              id="send"
+              style="border: 1px #0e9f49"
+              class="btn btn-default"
+              type="button"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <table id="message-history" class="table table-striped">
+            <thead>
+              <tr>
+                <th>Messages</th>
+              </tr>
+            </thead>
+            <tbody id="messages"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
